@@ -1,99 +1,58 @@
-# LCAP  
-## Library Catalog & Access Protocol
+# Library Catalog & Access Protocol (LCAP)
 
-LCAP is a strict, format-agnostic protocol for exposing library catalogs and access options **truthfully and explicitly**.
+The **Library Catalog & Access Protocol (LCAP)** is a strict, format-agnostic protocol for exposing library catalogs and access signals with **explicit state, no inference, and long-term interoperability**.
 
-It is designed as a modern replacement for OPDS-style feeds, eliminating inference, hidden behavior, and guesswork.  
-LCAP allows systems to say exactly what they know — and clearly say when they don’t.
+LCAP is designed for libraries, vendors, and platforms that require deterministic catalog traversal, offline and snapshot-safe operation, and unambiguous signaling of availability, actions, and failures—without assuming publication formats, DRM systems, identity models, or UI behavior.
 
----
-
-## What LCAP is
-
-- A protocol for **catalog discovery and access signaling**
-- Format-agnostic (print, EPUB, PDF, audio, DAISY, comics, future formats)
-- Explicit about availability, restrictions, and actions
-- Safe for offline, snapshot, and preservation use
-- Suitable for libraries, vendors, aggregators, consortia, and national systems
-
-LCAP is **not** a UI framework, business model, DRM system, or identity platform.
+**Current release:** v1.0.0 (Frozen)
 
 ---
 
-## Core principles
+## Specifications
 
-- **No inference**  
-  Missing information is represented as `unknown`, never guessed.
+LCAP is defined by a small set of normative specifications. These documents are authoritative.
 
-- **Explicit actions**  
-  Operations (borrow, hold, fetch, etc.) are declared explicitly and may fail.
+### Core
 
-- **Clear authority boundaries**  
-  LCAP is authoritative about catalog structure and access signaling, not publication meaning or policy enforcement.
+- **[LCAP Core](specs/lcap-core.md)**  
+  Defines the core resource model, availability and state rules, action declaration mechanics, capability signaling, offline support, and truth discipline.
 
-- **Incremental adoption**  
-  Discovery-only catalogs are fully conformant.
+### Fulfillment
 
-Strictness is intentional. It enables trust, interoperability, and long-term stability.
+- **[LCAP Fulfillment – Basic Circulation Profile](specs/lcap-fulfillment-basic.md)**  
+  Defines standard circulation actions (borrow, hold, return, renew, fetch) and explicit outcome semantics.
 
----
+### Authentication
 
-## The LCAP specification suite
+- **[LCAP Auth Handoff](specs/lcap-auth-handoff.md)**  
+  Defines a neutral, explicit mechanism for handing off authentication and authorization to external systems.
 
-LCAP is published as a small, modular set of specifications:
+### Conformance
 
-- **LCAP Core**  
-  Catalog structure; items, editions, holdings; availability and restriction states; action declaration; capabilities; snapshots.
-
-- **LCAP Fulfillment – Basic**  
-  Optional circulation actions (borrow, hold, return, renew, fetch) with explicit outcomes.
-
-- **LCAP Auth Handoff**  
-  Explicit transition to external authentication/authorization systems (without defining identity).
-
-- **LCAP Conformance & Validation**  
-  Defines conformance classes and validation rules.
-
-Each specification is independently versioned and optional unless its functionality is required.
+- **[LCAP Conformance & Validation](specs/lcap-conformance-validation.md)**  
+  Defines conformance classes, validation expectations, and prohibited non-conformant behavior.
 
 ---
 
-## Documentation
+## Design Principles (Non-Normative Summary)
 
-Start here:
-
-- **What is LCAP?**  
-  Non-technical overview of intent, scope, and design philosophy.
-
-- **LCAP Conformance Cheat Sheet**  
-  One-page explanation of what compliance means — and what is forbidden.
-
-- **Hello, LCAP**  
-  Minimal, fully conformant, discovery-only example.
-
-- **OPDS → LCAP Migration Note**  
-  Practical guidance for mapping existing OPDS systems without rewrites.
+- **Format-agnostic:** Works equally with EPUB, PDF, audiobooks, comics, DAISY, and future formats.
+- **No inference:** Missing information is represented as unknown, never guessed.
+- **Explicit state:** Availability, actions, failures, and denials are always explicit.
+- **Layered authority:** Catalog and circulation truth are separated from publication semantics.
+- **Offline-first:** Deterministic traversal and snapshot-safe by design.
 
 ---
 
-## Status
+## Non-Goals
 
-- **LCAP Core**: Frozen and stable  
-- Companion specifications evolve independently
-
-LCAP favors correctness over convenience and explicitness over heuristics.
-
----
-
-## In one sentence
-
-> **LCAP is a strict, format-agnostic protocol that lets libraries say exactly what they know — and nothing they don’t — about their catalogs and access options.**
+LCAP does not define DRM, payment systems, identity schemas, recommendation engines, search ranking, UI behavior, or publication semantics. These concerns are intentionally out of scope.
 
 ---
 
 ## License
 
 LCAP specifications and documentation are licensed under the  
-**Creative Commons Attribution 4.0 International License (CC BY 4.0)**.
+Creative Commons Attribution 4.0 International License (CC BY 4.0).
 
-See the LICENSE file for full terms.
+See the LICENSE file for details.

@@ -25,3 +25,57 @@ These documents are authoritative and collectively define the protocol.
 
 - **[LCAP Fulfillment — Basic Circulation Profile](specs/lcap-fulfillment-basic.md)**  
   Defines standard circulation actions (borrow, hold, return, renew, fetch) and their explicit, non-inferential outcome semantics.
+
+### Authentication
+
+- **[LCAP Auth Handoff](specs/lcap-auth-handoff.md)**  
+  Defines a neutral, explicit mechanism for handing off authentication and authorization to external systems without embedding identity or policy assumptions.
+
+### Conformance
+
+- **[LCAP Conformance & Validation](specs/lcap-conformance-validation.md)**  
+  Defines conformance classes, validation expectations, and prohibited non-conformant behavior.
+
+---
+
+## Design Principles (Non-Normative Summary)
+
+- **Format-agnostic**  
+  Works equally with EPUB, PDF, audiobooks, comics, DAISY, and future publication forms.
+
+- **No inference**  
+  Missing or unknown information is represented explicitly, never guessed or synthesized.
+
+- **Explicit state**  
+  Availability, actions, denials, and failures are always declared, never implied.
+
+- **Layered authority**  
+  Catalog and circulation truth are kept separate from publication semantics, rendering behavior, and policy decisions.
+
+- **Offline-first**  
+  Deterministic traversal and snapshot-safe operation are architectural requirements, not optimizations.
+
+---
+
+## Non-Goals
+
+LCAP intentionally does **not** define or standardize:
+
+- DRM systems or content protection schemes  
+- Payment or commerce models  
+- Identity schemas or authentication providers  
+- Recommendation engines or ranking algorithms  
+- Search heuristics or relevance scoring  
+- UI behavior or presentation  
+- Publication semantics or compatibility evaluation  
+
+These concerns are out of scope by design.
+
+---
+
+## License
+
+LCAP specifications and documentation are licensed under the  
+**Creative Commons Attribution 4.0 International License (CC BY 4.0)**.
+
+See the `LICENSE` file for details.

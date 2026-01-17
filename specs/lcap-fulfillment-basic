@@ -1,0 +1,331 @@
+# LCAP Fulfillment – Basic Circulation Profile
+
+**Version:** 1.0
+**Status:** Frozen
+
+---
+
+## 1. Scope and Purpose
+
+This document defines the **LCAP Fulfillment – Basic Circulation Profile**.
+
+The Fulfillment – Basic profile specifies a minimal, explicit, and deterministic set of **circulation-related actions** that MAY be declared by LCAP Core–conformant servers.
+
+This profile defines:
+
+* standard circulation actions
+* action declaration requirements
+* allowed action outcomes
+* explicit failure and denial semantics
+
+This profile does **not** define:
+
+* lending policy
+* eligibility rules
+* DRM mechanisms
+* delivery formats
+* authentication or identity systems
+* UI flows or patron experience
+
+Fulfillment – Basic extends **LCAP Core** and MUST be implemented in full to claim conformance to this profile.
+
+---
+
+## 2. Normative Language and Dependencies
+
+The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are to be interpreted as described in RFC 2119 and RFC 8174.
+
+An implementation claiming conformance to this profile:
+
+* MUST be fully conformant with **LCAP Core**
+* MUST implement all requirements in this document
+* MUST NOT weaken or reinterpret Core requirements
+
+---
+
+## 3. Fulfillment Model Overview
+
+### 3.1 Actions as Explicit Operations
+
+In LCAP, fulfillment is expressed **only through explicit action declarations**.
+
+Actions:
+
+* represent operations that MAY be attempted
+* do not imply guarantees
+* may fail even when declared
+
+Actions MUST NOT be inferred from:
+
+* availability states
+* formats
+* links
+* prior behavior
+
+---
+
+### 3.2 Action Attachment Point
+
+All fulfillment actions:
+
+* MUST be declared at the **holding** level
+* MUST NOT be declared at catalog, collection, item, or edition levels
+
+Higher-level resources MUST NOT imply the presence or absence of fulfillment actions.
+
+---
+
+## 4. Standard Fulfillment Actions
+
+This profile defines the following standard actions.
+
+Servers MAY support any subset of these actions, but MUST follow all rules for any action they declare.
+
+---
+
+### 4.1 `borrow`
+
+The `borrow` action represents an attempt to initiate a loan.
+
+A server declaring `borrow`:
+
+* MUST accept the request and return an explicit outcome
+* MUST NOT guarantee success
+* MUST NOT encode policy rules in the declaration
+
+Possible outcomes:
+
+* success
+* failure
+* denial
+* pending
+
+---
+
+### 4.2 `hold`
+
+The `hold` action represents an attempt to place a reservation or hold.
+
+A server declaring `hold`:
+
+* MUST treat the action as an attempt, not a promise
+* MUST return explicit outcomes
+
+Possible outcomes:
+
+* success
+* failure
+* denial
+* pending
+
+---
+
+### 4.3 `return`
+
+The `return` action represents an attempt to conclude an existing loan.
+
+A server declaring `return`:
+
+* MUST handle the action explicitly
+* MUST return a clear outcome
+
+Possible outcomes:
+
+* success
+* failure
+* denial
+
+---
+
+### 4.4 `renew`
+
+The `renew` action represents an attempt to extend an existing loan.
+
+A server declaring `renew`:
+
+* MUST treat renewal eligibility as server-controlled
+* MUST return explicit outcomes
+
+Possible outcomes:
+
+* success
+* failure
+* denial
+* pending
+
+---
+
+### 4.5 `fetch`
+
+The `fetch` action represents an attempt to access or retrieve the content associated with a holding.
+
+The `fetch` action:
+
+* MUST NOT imply immediate delivery
+* MAY require authentication or authorization
+* MAY redirect to external systems
+
+Possible outcomes:
+
+* success
+* failure
+* denial
+* pending
+
+---
+
+## 5. Action Declaration Requirements
+
+### 5.1 Explicit Declaration
+
+Each action:
+
+* MUST be explicitly declared
+* MUST have a stable identifier
+* MUST be discoverable without inference
+
+Absence of an action declaration MUST be interpreted as:
+
+* the action is not supported or not permitted
+* not as a temporary failure
+
+---
+
+### 5.2 Parameters
+
+Actions MAY declare parameters.
+
+If parameters are declared:
+
+* all required parameters MUST be identified explicitly
+* parameter absence MUST result in explicit failure
+* servers MUST NOT infer missing parameters
+
+---
+
+## 6. Action Outcomes
+
+### 6.1 Required Outcome Explicitness
+
+Every action execution MUST result in an explicit outcome.
+
+Silent failure, ambiguous success, or implied state changes are forbidden.
+
+---
+
+### 6.2 Outcome Types
+
+The following outcome types are defined:
+
+* **success**
+  The requested action completed as intended.
+
+* **failure**
+  The action was processed but could not be completed due to a system or operational issue.
+
+* **denial**
+  The action was rejected due to policy, eligibility, or authorization.
+
+* **pending**
+  The action was accepted but has not yet reached a final state.
+
+---
+
+### 6.3 Outcome Semantics
+
+Outcome types:
+
+* MUST be distinguishable
+* MUST NOT be overloaded with policy explanation
+* MAY include descriptive messages, but such messages are non-normative
+
+---
+
+## 7. Relationship to Availability
+
+Availability states and fulfillment actions are **independent**.
+
+* Availability MUST NOT imply action success
+* Action declaration MUST NOT imply availability
+* Actions MAY fail regardless of availability state
+
+Clients MUST treat availability and actions as separate signals.
+
+---
+
+## 8. Authentication and Authorization
+
+This profile does **not** define authentication or identity.
+
+If an action requires authentication:
+
+* the server MUST signal this explicitly
+* the server MAY delegate to external systems
+
+Authentication signaling and handoff are defined in **LCAP Auth Handoff**.
+
+---
+
+## 9. Error Handling and Failure Discipline
+
+Servers MUST:
+
+* distinguish denial from failure
+* represent indeterminate states explicitly
+* avoid best-effort behavior
+
+Clients MUST:
+
+* rely only on explicit outcomes
+* avoid retrying actions unless instructed explicitly
+
+---
+
+## 10. Conformance Requirements
+
+An implementation claiming conformance to **LCAP Fulfillment – Basic** MUST:
+
+* be LCAP Core–conformant
+* declare actions only at the holding level
+* implement all declared actions fully
+* return explicit outcomes for every action execution
+* avoid inference, defaulting, or silent fallback
+
+An implementation MUST NOT claim conformance if it violates any requirement in this document.
+
+---
+
+## 11. Non-Goals and Explicit Exclusions
+
+This profile MUST NOT define:
+
+* lending policy rules
+* patron eligibility logic
+* DRM enforcement
+* delivery mechanisms
+* file formats
+* UI flows or messaging
+* analytics or tracking
+
+These exclusions are intentional and normative.
+
+---
+
+## 12. Stability and Evolution
+
+LCAP Fulfillment – Basic is frozen.
+
+Future revisions:
+
+* MUST preserve backward compatibility
+* MUST NOT weaken explicit outcome semantics
+* MUST NOT introduce inference
+* MUST respect LCAP Core invariants
+
+Additional fulfillment functionality MUST be introduced through separate profiles.
+
+---
+
+## End of LCAP Fulfillment – Basic Circulation Profile
+
+---

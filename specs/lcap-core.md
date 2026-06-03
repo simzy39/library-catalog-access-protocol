@@ -9,7 +9,31 @@
 
 This document defines the **LCAP Core Protocol**.
 
-LCAP Core specifies a format-agnostic, explicit, and deterministic protocol for exposing library catalogs and access signaling. It defines the **minimum required model and rules** for representing catalog structure, resource relationships, availability states, declared actions, server capabilities, and failure conditions.
+LCAP Core specifies a format-agnostic, explicit, and deterministic protocol for exposing library catalogs and access signaling.
+
+It defines the minimum required model and rules for:
+
+* catalog structure
+* resource relationships
+* availability states
+* declared actions
+* capability declarations
+* failure handling
+* deterministic traversal
+
+LCAP is designed to:
+
+* operate uniformly across publication and media formats
+* avoid inference and heuristic behavior
+* make state explicit and inspectable
+* support offline and snapshot-based operation
+* preserve interoperability across vendors and time
+
+LCAP prioritizes truthfulness, determinism, and long-term stability over convenience.
+
+LCAP intentionally defines only catalog discovery, availability signaling, and access affordances.
+
+Features outside those concerns are intentionally excluded from Core unless required to support truthful catalog representation or deterministic protocol behavior.
 
 LCAP Core does **not** define:
 
@@ -24,7 +48,7 @@ LCAP Core does **not** define:
 
 Those concerns are explicitly out of scope and may be addressed by separate specifications.
 
-Companion specifications MAY extend LCAP Core but MUST NOT redefine or weaken its requirements.
+Companion specifications MAY extend LCAP Core but MUST NOT redefine, weaken, or contradict its requirements.
 
 ---
 
@@ -38,36 +62,89 @@ Partial implementations are permitted, provided all unsupported information and 
 
 ---
 
-## 3. Architectural Overview
+## 3. Core Principles
 
-LCAP defines a **hierarchical resource model** with explicit authority boundaries.
+The following principles govern the interpretation of all requirements in this specification.
 
-### 3.1 Resource Hierarchy
+### 3.1 Format Agnosticism
 
-The LCAP Core resource hierarchy is:
+LCAP MUST function without assuming:
 
-* **Catalog**
-* **Collection**
-* **Item**
-* **Edition**
-* **Holding**
+* file-based delivery
+* download semantics
+* specific publication formats
+* correctness or completeness of publication-supplied metadata
 
-Each resource level has a distinct purpose and MUST NOT be collapsed or inferred from another level.
+Formats are treated as opaque representations.
 
-### 3.2 Resources vs Actions
+LCAP MUST NOT derive behavior, compatibility, accessibility, or circulation semantics solely from format declarations.
+
+### 3.2 Truth Discipline
+
+LCAP avoids inference.
+
+If information is not explicitly declared, it MUST be represented as unknown where applicable, or omitted where no authoritative value exists.
+
+Servers MUST NOT infer:
+
+* availability
+* accessibility
+* publication capabilities
+* circulation eligibility
+* compatibility
+* user intent
+
+Clients MUST NOT assume behavior beyond what is explicitly declared.
+
+Unknown is preferable to incorrect information.
+
+### 3.3 Authority Boundaries
+
+LCAP is authoritative about:
+
+* catalog structure
+* resource relationships
+* availability states
+* declared actions
+* declared capabilities
+
+LCAP is not authoritative about:
+
+* publication meaning
+* accessibility semantics
+* publication compatibility
+* rendering behavior
+* internal publication structure
+
+LCAP MAY expose such information when supplied by external systems but MUST NOT reinterpret, normalize, strengthen, or invent it.
+
+### 3.4 Resources vs Actions
 
 LCAP distinguishes between:
 
-* **Resources**, which describe catalog entities and their states
-* **Actions**, which represent operations that MAY be attempted
+* Resources, which describe catalog entities and state
+* Actions, which describe operations that MAY be attempted
 
-Actions are **not links** and MUST be declared explicitly.
+Actions MUST be declared explicitly.
 
-### 3.3 Server and Client Roles
+Actions MUST NOT be inferred from:
 
-* Servers are authoritative for the resources and states they expose.
-* Clients MUST NOT infer behavior beyond what is explicitly declared.
-* Clients MUST treat missing information as unknown.
+* resource presence
+* links
+* availability
+* format declarations
+* naming conventions
+
+### 3.5 Offline and Snapshot Operation
+
+LCAP MUST support:
+
+* deterministic traversal
+* cacheable responses
+* offline consumption
+* snapshot-based operation
+
+LCAP MUST NOT assume continuous connectivity.
 
 ---
 

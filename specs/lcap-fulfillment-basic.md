@@ -1,6 +1,6 @@
 # LCAP Fulfillment – Basic Circulation Profile
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 **Status:** Frozen
 
 ---
@@ -9,22 +9,27 @@
 
 This document defines the **LCAP Fulfillment – Basic Circulation Profile**.
 
-The Fulfillment – Basic profile specifies a minimal, explicit, and deterministic set of **circulation-related actions** that MAY be declared by LCAP Core–conformant servers.
+Fulfillment – Basic specifies a minimal, explicit, and deterministic set of circulation and fulfillment actions that MAY be declared by LCAP Core–conformant servers.
 
 This profile defines:
 
 * standard circulation actions
 * action declaration requirements
-* allowed action outcomes
-* explicit failure and denial semantics
+* action execution semantics
+* action outcome semantics
+* fulfillment initiation signaling
+* explicit failure and denial behavior
 
 This profile does **not** define:
 
 * lending policy
-* eligibility rules
+* patron eligibility rules
+* authentication systems
+* identity models
 * DRM mechanisms
 * delivery formats
-* authentication or identity systems
+* licensing terms
+* transport protocols
 * UI flows or patron experience
 
 Fulfillment – Basic extends **LCAP Core** and MUST be implemented in full to claim conformance to this profile.
@@ -37,23 +42,23 @@ The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** ar
 
 An implementation claiming conformance to this profile:
 
-* MUST be fully conformant with **LCAP Core**
+* MUST be fully conformant with LCAP Core
 * MUST implement all requirements in this document
-* MUST NOT weaken or reinterpret Core requirements
+* MUST NOT weaken, reinterpret, or contradict Core requirements
 
 ---
 
-## 3. Fulfillment Model Overview
+## 3. Fulfillment Principles
 
 ### 3.1 Actions as Explicit Operations
 
-In LCAP, fulfillment is expressed **only through explicit action declarations**.
+In LCAP, fulfillment is expressed only through explicit action declarations.
 
 Actions:
 
 * represent operations that MAY be attempted
 * do not imply guarantees
-* may fail even when declared
+* MAY fail even when declared
 
 Actions MUST NOT be inferred from:
 
@@ -68,83 +73,131 @@ Actions MUST NOT be inferred from:
 
 All fulfillment actions:
 
-* MUST be declared at the **holding** level
+* MUST be declared at the holding level
 * MUST NOT be declared at catalog, collection, item, or edition levels
 
 Higher-level resources MUST NOT imply the presence or absence of fulfillment actions.
 
 ---
 
-## 4. Standard Fulfillment Actions
+### 3.3 Fulfillment Truth Discipline
 
-This profile defines the following standard actions.
+Fulfillment actions represent attempts.
 
-Servers MAY support any subset of these actions, but MUST follow all rules for any action they declare.
+Action declaration MUST NOT be interpreted as:
+
+* success
+* eligibility
+* availability
+* entitlement
+
+Declared actions MAY fail.
+
+Servers MUST represent outcomes explicitly.
+
+Clients MUST treat action execution outcomes as authoritative.
 
 ---
 
-### 4.1 `borrow`
+### 3.4 Policy Boundaries
+
+This profile defines fulfillment semantics.
+
+This profile does not define:
+
+* lending policy
+* eligibility rules
+* circulation limits
+* loan duration
+* hold queue ordering
+* institutional business rules
+
+Policy decisions remain server-controlled.
+
+Policy outcomes MUST be communicated through explicit action outcomes rather than inferred behavior.
+
+---
+
+## 4. Capability Declaration
+
+Servers implementing this profile MUST declare support via the capabilities resource.
+
+Example:
+
+```json
+{
+  "extensions": [
+    "https://lcap.org/specs/fulfillment-basic/1.0.1"
+  ]
+}
+```
+
+The Fulfillment – Basic extension identifier MUST be present for servers claiming conformance to this profile.
+
+Clients MUST NOT assume fulfillment behavior unless this profile is declared.
+
+---
+
+## 5. Standard Fulfillment Actions
+
+This profile defines the following standard actions:
+
+* borrow
+* hold
+* return
+* renew
+* fetch
+
+Servers MAY support any subset of these actions.
+
+For every declared action, all requirements defined in this specification apply.
+
+---
+
+### 5.1 borrow
 
 The `borrow` action represents an attempt to initiate a loan.
 
-A server declaring `borrow`:
-
-* MUST accept the request and return an explicit outcome
-* MUST NOT guarantee success
-* MUST NOT encode policy rules in the declaration
-
 Possible outcomes:
 
 * success
 * failure
 * denial
 * pending
+* indeterminate
 
 ---
 
-### 4.2 `hold`
+### 5.2 hold
 
 The `hold` action represents an attempt to place a reservation or hold.
 
-A server declaring `hold`:
-
-* MUST treat the action as an attempt, not a promise
-* MUST return explicit outcomes
-
 Possible outcomes:
 
 * success
 * failure
 * denial
 * pending
+* indeterminate
 
 ---
 
-### 4.3 `return`
+### 5.3 return
 
 The `return` action represents an attempt to conclude an existing loan.
 
-A server declaring `return`:
-
-* MUST handle the action explicitly
-* MUST return a clear outcome
-
 Possible outcomes:
 
 * success
 * failure
 * denial
+* indeterminate
 
 ---
 
-### 4.4 `renew`
+### 5.4 renew
 
 The `renew` action represents an attempt to extend an existing loan.
-
-A server declaring `renew`:
-
-* MUST treat renewal eligibility as server-controlled
-* MUST return explicit outcomes
 
 Possible outcomes:
 
@@ -152,17 +205,19 @@ Possible outcomes:
 * failure
 * denial
 * pending
+* indeterminate
 
 ---
 
-### 4.5 `fetch`
+### 5.5 fetch
 
-The `fetch` action represents an attempt to access or retrieve the content associated with a holding.
+The `fetch` action represents an attempt to initiate access to the resource associated with a holding.
 
 The `fetch` action:
 
 * MUST NOT imply immediate delivery
-* MAY require authentication or authorization
+* MAY require authentication
+* MAY require authorization
 * MAY redirect to external systems
 
 Possible outcomes:
@@ -171,12 +226,13 @@ Possible outcomes:
 * failure
 * denial
 * pending
+* indeterminate
 
 ---
 
-## 5. Action Declaration Requirements
+## 6. Action Declaration Requirements
 
-### 5.1 Explicit Declaration
+### 6.1 Explicit Declaration
 
 Each action:
 
@@ -186,64 +242,119 @@ Each action:
 
 Absence of an action declaration MUST be interpreted as:
 
-* the action is not supported or not permitted
-* not as a temporary failure
+* unsupported, or
+* not currently permitted
+
+and MUST NOT be interpreted as temporary failure.
 
 ---
 
-### 5.2 Parameters
+## 7. Action Execution Semantics
 
-Actions MAY declare parameters.
+Action execution mechanisms are implementation-specific.
 
-If parameters are declared:
+This profile defines the semantics of fulfillment actions, not the transport used to execute them.
 
-* all required parameters MUST be identified explicitly
-* parameter absence MUST result in explicit failure
-* servers MUST NOT infer missing parameters
+Servers MAY use:
+
+* HTTP APIs
+* message queues
+* internal services
+* proprietary transports
+* future transport mechanisms
+
+Clients and servers MUST rely on declared action semantics rather than transport assumptions.
 
 ---
 
-## 6. Action Outcomes
+## 8. Action Outcomes
 
-### 6.1 Required Outcome Explicitness
+### 8.1 Required Outcome Explicitness
 
 Every action execution MUST result in an explicit outcome.
 
-Silent failure, ambiguous success, or implied state changes are forbidden.
+Silent failure, ambiguous success, and implied state changes are forbidden.
 
 ---
 
-### 6.2 Outcome Types
+### 8.2 Outcome Types
 
 The following outcome types are defined:
 
-* **success**
-  The requested action completed as intended.
-
-* **failure**
-  The action was processed but could not be completed due to a system or operational issue.
-
-* **denial**
-  The action was rejected due to policy, eligibility, or authorization.
-
-* **pending**
-  The action was accepted but has not yet reached a final state.
+* success
+* failure
+* denial
+* pending
+* indeterminate
 
 ---
 
-### 6.3 Outcome Semantics
+### 8.3 Outcome Semantics
+
+#### success
+
+The requested action completed successfully.
+
+#### failure
+
+The action was processed but could not be completed due to a system or operational condition.
+
+#### denial
+
+The action was rejected due to policy, eligibility, authorization, or other server-controlled rules.
+
+#### pending
+
+The action was accepted but has not yet reached a final state.
+
+#### indeterminate
+
+The final state of the action cannot currently be determined.
+
+An indeterminate outcome MUST NOT be interpreted as success, failure, denial, or pending.
+
+---
+
+### 8.4 Additional Information
 
 Outcome types:
 
 * MUST be distinguishable
 * MUST NOT be overloaded with policy explanation
-* MAY include descriptive messages, but such messages are non-normative
+* MAY include descriptive messages
+
+Descriptive messages are non-normative.
 
 ---
 
-## 7. Relationship to Availability
+## 9. Fetch Access Semantics
 
-Availability states and fulfillment actions are **independent**.
+A successful fetch action MAY provide information describing how access begins.
+
+Access mechanisms are descriptive only.
+
+Examples include:
+
+* redirect
+* download
+* stream
+* external
+* unknown
+
+Fetch MUST NOT imply:
+
+* DRM behavior
+* offline capability
+* format compatibility
+* accessibility characteristics
+
+Clients MUST treat access mechanisms as opaque.
+
+---
+
+## 10. Relationship to Availability
+
+Availability states and fulfillment actions are independent.
 
 * Availability MUST NOT imply action success
 * Action declaration MUST NOT imply availability
@@ -253,20 +364,20 @@ Clients MUST treat availability and actions as separate signals.
 
 ---
 
-## 8. Authentication and Authorization
+## 11. Authentication and Authorization
 
-This profile does **not** define authentication or identity.
+This profile does not define authentication or identity.
 
 If an action requires authentication:
 
 * the server MUST signal this explicitly
 * the server MAY delegate to external systems
 
-Authentication signaling and handoff are defined in **LCAP Auth Handoff**.
+Authentication signaling is defined by LCAP Auth Handoff.
 
 ---
 
-## 9. Error Handling and Failure Discipline
+## 12. Error Handling and Failure Discipline
 
 Servers MUST:
 
@@ -274,18 +385,30 @@ Servers MUST:
 * represent indeterminate states explicitly
 * avoid best-effort behavior
 
+Example error categories include:
+
+* not-authorized
+* not-eligible
+* not-available
+* conflict
+* internal-error
+
+Servers MAY define additional error categories.
+
 Clients MUST:
 
 * rely only on explicit outcomes
-* avoid retrying actions unless instructed explicitly
+* avoid inference
+* treat server outcomes as authoritative
 
 ---
 
-## 10. Conformance Requirements
+## 13. Conformance Requirements
 
-An implementation claiming conformance to **LCAP Fulfillment – Basic** MUST:
+An implementation claiming conformance to Fulfillment – Basic MUST:
 
 * be LCAP Core–conformant
+* declare support for this profile explicitly
 * declare actions only at the holding level
 * implement all declared actions fully
 * return explicit outcomes for every action execution
@@ -295,7 +418,7 @@ An implementation MUST NOT claim conformance if it violates any requirement in t
 
 ---
 
-## 11. Non-Goals and Explicit Exclusions
+## 14. Non-Goals and Explicit Exclusions
 
 This profile MUST NOT define:
 
@@ -304,14 +427,15 @@ This profile MUST NOT define:
 * DRM enforcement
 * delivery mechanisms
 * file formats
-* UI flows or messaging
+* patron identity schemas
+* UI flows
 * analytics or tracking
 
 These exclusions are intentional and normative.
 
 ---
 
-## 12. Stability and Evolution
+## 15. Stability and Evolution
 
 LCAP Fulfillment – Basic is frozen.
 
@@ -322,10 +446,10 @@ Future revisions:
 * MUST NOT introduce inference
 * MUST respect LCAP Core invariants
 
+Existing action semantics MUST remain stable once published.
+
 Additional fulfillment functionality MUST be introduced through separate profiles.
 
 ---
 
 ## End of LCAP Fulfillment – Basic Circulation Profile
-
----

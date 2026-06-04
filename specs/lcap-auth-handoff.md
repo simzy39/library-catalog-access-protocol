@@ -9,15 +9,36 @@
 
 This document defines **LCAP Auth Handoff**.
 
-LCAP Auth Handoff specifies a **neutral, explicit mechanism** for transitioning from an LCAP-declared action to an **external authentication and/or authorization system**, without defining identity models, credentials, or policy logic.
+LCAP Auth Handoff specifies a neutral, explicit mechanism for transitioning from an LCAP-declared action to an external authentication and/or authorization system.
 
-Auth Handoff exists to support real-world access control while preserving LCAP’s core principles:
+Auth Handoff exists to support real-world access control while preserving LCAP Core principles:
 
 * explicit state
 * no inference
-* strict authority boundaries
+* truth discipline
+* authority boundaries
 
-This specification extends **LCAP Core** and applies to fulfillment actions defined in **LCAP Fulfillment – Basic**.
+This specification defines:
+
+* authentication requirement signaling
+* authentication challenge signaling
+* authentication handoff descriptors
+* post-authentication action resumption
+
+This specification does **not** define:
+
+* identity models
+* credentials
+* authentication protocols
+* authorization policy
+* entitlement rules
+* patron schemas
+* session models
+* UI behavior
+
+Those concerns remain external.
+
+This specification extends LCAP Core and MAY be used by Fulfillment profiles.
 
 ---
 
@@ -25,11 +46,11 @@ This specification extends **LCAP Core** and applies to fulfillment actions defi
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are to be interpreted as described in RFC 2119 and RFC 8174.
 
-An implementation claiming conformance to **LCAP Auth Handoff**:
+An implementation claiming conformance to this specification:
 
 * MUST be LCAP Core–conformant
 * MUST follow all requirements in this document
-* MUST NOT weaken or reinterpret Core or Fulfillment requirements
+* MUST NOT weaken or reinterpret Core requirements
 
 ---
 
@@ -39,10 +60,10 @@ An implementation claiming conformance to **LCAP Auth Handoff**:
 
 LCAP Auth Handoff:
 
-* declares **that** authentication or authorization is required
-* defines **how** a client is handed off
+* declares that authentication or authorization is required
+* defines how a client is handed off
 
-It does **not** define:
+It does not define:
 
 * user identity models
 * credentials
@@ -59,208 +80,227 @@ Those concerns are owned by external systems.
 
 Authentication requirements MUST be declared explicitly.
 
-Clients MUST NOT infer authentication needs from:
+Clients MUST NOT infer authentication requirements from:
 
-* HTTP status codes alone
 * redirects
 * cookies
-* format types
+* status codes alone
+* format declarations
 * prior behavior
 
 ---
 
-## 4. Auth Handoff Model
+### 3.3 Authentication State Discipline
 
-### 4.1 Auth-Required Actions
+Authentication requirements are explicit state.
 
-An action MAY require authentication or authorization.
+Authentication requirement declaration MUST NOT be interpreted as:
 
-If so, the server MUST:
+* authentication success
+* authorization success
+* entitlement
+* action success
 
-* declare this requirement explicitly
-* provide a handoff mechanism
+Authentication outcomes and action outcomes remain separate.
 
-The absence of an auth requirement declaration MUST be interpreted as:
-
-* no authentication is required for that action
-* not as “authentication may still be required”
-
----
-
-### 4.2 Handoff Declaration
-
-When authentication is required, the server MUST provide an **auth handoff descriptor** as part of the action declaration or response.
-
-The handoff descriptor MUST:
-
-* identify the external system
-* specify the handoff type
-* provide the necessary initiation data
+Clients MUST treat authentication state and action outcomes as independent signals.
 
 ---
 
-## 5. Handoff Types
+## 4. Capability Declaration
 
-This specification defines the following handoff types.
+Servers implementing this specification MUST declare support via the capabilities resource.
 
-Servers MAY support one or more handoff types.
+Example:
 
----
+```json
+{
+  "extensions": [
+    "https://lcap.org/specs/auth-handoff/1.0.0"
+  ]
+}
+```
 
-### 5.1 Redirect Handoff
+The Auth Handoff extension identifier MUST be present for servers claiming conformance to this specification.
 
-A **redirect handoff** instructs the client to navigate the user to an external system.
-
-A redirect handoff MUST:
-
-* provide a target URI
-* specify whether return to the LCAP server is expected
-
-The external system is responsible for:
-
-* authentication
-* authorization
-* user interaction
-
-LCAP makes no assumptions about:
-
-* session continuity
-* credential form
-* user experience
+Clients MUST NOT assume authentication handoff behavior unless this extension is declared.
 
 ---
 
-### 5.2 Token Exchange Handoff
+## 5. Authentication Requirement Signaling
 
-A **token exchange handoff** instructs the client to obtain or present a token issued by an external system.
+Actions that require authentication MUST declare:
 
-A token exchange handoff MUST:
+```json
+{
+  "auth_required": true
+}
+```
 
-* identify the required token type
-* specify where the token is obtained or presented
+Rules:
 
-Token semantics are **out of scope**.
-
----
-
-### 5.3 Delegated Confirmation Handoff
-
-A **delegated confirmation handoff** represents an external decision point.
-
-In this model:
-
-* the client initiates a handoff
-* the final action outcome is determined externally
-* the server later reports the outcome explicitly
-
-This handoff type is commonly used for:
-
-* consortia
-* inter-library systems
-* third-party vendors
+* `auth_required: true` indicates authentication is required before or during action execution
+* absence of `auth_required` MUST be interpreted as false
+* clients MUST NOT infer authentication requirements from action failure
 
 ---
 
-## 6. Action Flow with Auth Handoff
+## 6. Authentication Challenge Response
 
-### 6.1 Attempt Semantics
+If an unauthenticated client attempts an authenticated action, the server MUST return an explicit authentication challenge.
 
-When a client attempts an action requiring authentication:
+Example:
 
-1. The server MUST respond with:
-
-   * an explicit auth-required state
-   * a handoff descriptor
-2. The client MUST initiate the handoff explicitly
-3. The server MUST later return an explicit action outcome
-
-The server MUST NOT assume:
-
-* the client completed the handoff
-* authentication succeeded
-* authorization was granted
+```json
+{
+  "error": {
+    "code": "not-authorized",
+    "message": "Authentication required",
+    "auth": {
+      "type": "redirect",
+      "href": "https://auth.example/login",
+      "return_to": "https://lcap.example/actions/borrow"
+    }
+  }
+}
+```
 
 ---
 
-### 6.2 Outcome Reporting
+## 7. Auth Handoff Descriptor
 
-After handoff completion, the server MUST return one of the standard fulfillment outcomes:
+The `auth` object describes how authentication begins.
+
+Required fields:
+
+| Field | Description                |
+| ----- | -------------------------- |
+| type  | Handoff mechanism          |
+| href  | Authentication entry point |
+
+Optional fields:
+
+| Field     | Description     |
+| --------- | --------------- |
+| return_to | Resume location |
+| state     | Opaque state    |
+
+---
+
+## 8. Supported Handoff Types
+
+Allowed values:
+
+| Type     | Meaning                                           |
+| -------- | ------------------------------------------------- |
+| redirect | Client redirects user                             |
+| external | External system handles interaction               |
+| unknown  | Authentication required but mechanism unspecified |
+
+Rules:
+
+* clients MUST treat handoff mechanisms as opaque
+* servers MUST NOT imply specific authentication technologies
+* handoff types describe client behavior, not authentication architecture
+
+---
+
+## 9. Post-Authentication Resumption
+
+After successful authentication:
+
+* clients MAY retry the original action
+* servers MUST NOT assume successful authentication until verified
+* action execution MUST remain explicit and failure-capable
+
+Authentication success MUST NOT imply:
+
+* authorization success
+* entitlement
+* action success
+
+---
+
+## 10. State Management
+
+Servers MAY:
+
+* maintain server-side state
+* use opaque tokens
+* use cookies
+* use sessions
+
+Clients MUST NOT depend on any specific state model.
+
+---
+
+## 11. Error Handling
+
+Authentication-related failures MUST be explicit.
+
+Example:
+
+```json
+{
+  "error": {
+    "code": "authentication-failed",
+    "message": "Login unsuccessful"
+  }
+}
+```
+
+Authentication failure MUST remain distinguishable from:
+
+* authorization denial
+* eligibility failure
+* availability failure
+* operational failure
+
+Authentication state MAY be indeterminate.
+
+An indeterminate authentication state MUST NOT be interpreted as:
 
 * success
 * failure
+* authorization
 * denial
-* pending
 
-Redirect loops, silent success, or implicit completion are forbidden.
-
----
-
-## 7. Failure and Denial Semantics
-
-Authentication-related failure MUST be explicit.
-
-Servers MUST distinguish between:
-
-* authentication failure
-* authorization denial
-* operational failure
-
-Clients MUST NOT attempt retries unless explicitly instructed.
+Servers MUST represent indeterminate authentication states explicitly when known.
 
 ---
 
-## 8. Relationship to Capabilities
+## 12. Security Considerations
 
-Servers supporting Auth Handoff MUST declare this capability explicitly.
+This specification intentionally avoids defining:
 
-Capabilities describe:
+* credential handling
+* token formats
+* token storage
+* cryptographic requirements
 
-* server support for auth handoff
-* supported handoff types
-
-Capabilities MUST NOT:
-
-* describe identity models
-* imply authentication success
-* encode policy rules
+Implementers MUST follow appropriate security practices for their chosen authentication systems.
 
 ---
 
-## 9. Security Considerations
+## 13. Conformance Requirements
 
-LCAP Auth Handoff:
+An implementation claiming conformance to LCAP Auth Handoff MUST:
 
-* does not define secure transport requirements
-* does not define token formats
-* does not define credential handling
-
-Servers and clients MUST rely on external systems to ensure:
-
-* confidentiality
-* integrity
-* compliance with applicable security standards
-
----
-
-## 10. Conformance Requirements
-
-An implementation claiming conformance to **LCAP Auth Handoff** MUST:
-
-* be LCAP Core–conformant
+* declare support explicitly
 * declare authentication requirements explicitly
 * provide a valid handoff descriptor
-* support explicit outcome reporting
+* support explicit authentication challenge signaling
 * avoid inference and silent fallback
 
 An implementation MUST NOT claim conformance if it:
 
-* infers authentication needs
+* infers authentication requirements
 * relies on undocumented redirects
 * hides authentication failure
 
 ---
 
-## 11. Non-Goals and Explicit Exclusions
+## 14. Non-Goals and Explicit Exclusions
 
 This specification MUST NOT define:
 
@@ -268,14 +308,15 @@ This specification MUST NOT define:
 * authentication protocols
 * authorization policy
 * account management
-* session state models
-* UI or UX behavior
+* patron data models
+* session semantics
+* UI behavior
 
 These exclusions are intentional and normative.
 
 ---
 
-## 12. Stability and Evolution
+## 15. Stability and Evolution
 
 LCAP Auth Handoff is frozen.
 
@@ -290,5 +331,3 @@ Additional authentication mechanisms MUST be introduced through separate specifi
 ---
 
 ## End of LCAP Auth Handoff Specification
-
----

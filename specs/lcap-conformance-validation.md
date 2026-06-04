@@ -7,24 +7,32 @@
 
 ## 1. Scope and Purpose
 
-This document defines **conformance requirements and validation rules** for the Library Catalog & Access Protocol (LCAP).
+This document defines the **LCAP Conformance & Validation Specification**.
 
-It specifies:
+This specification defines:
 
-* conformance classes
-* requirements for claiming conformance
-* rules governing partial implementations
-* conditions under which conformance MUST be denied
-* validation expectations
+* LCAP conformance classes
+* validation requirements
+* machine-checkable constraints
+* testability requirements
+* rules for conformance claims
 
-This document does **not** define:
+Its purpose is to ensure that a claim of:
 
-* certification authorities
-* governance bodies
-* approval processes
-* tooling implementations
+> "LCAP-conformant"
 
-Conformance is a **self-declared, testable claim**.
+is precise, verifiable, and meaningful.
+
+This specification does **not**:
+
+* define new protocol behavior
+* extend LCAP Core semantics
+* modify companion profile semantics
+* define UI requirements
+* define operational requirements
+* define certification programs
+
+This specification establishes how conformance is evaluated, not how protocol behavior works.
 
 ---
 
@@ -32,213 +40,428 @@ Conformance is a **self-declared, testable claim**.
 
 The key words **MUST**, **MUST NOT**, **SHOULD**, **SHOULD NOT**, and **MAY** are to be interpreted as described in RFC 2119 and RFC 8174.
 
-This specification depends normatively on:
+An implementation claiming conformance:
 
-* **LCAP Core**
-* **LCAP Fulfillment – Basic** (if claimed)
-* **LCAP Auth Handoff** (if claimed)
-
----
-
-## 3. Conformance Philosophy
-
-LCAP conformance prioritizes:
-
-* honesty over completeness
-* explicitness over convenience
-* correctness over compatibility
-
-An implementation is **not required to implement all LCAP features**.
-It *is required* to represent everything it does implement **truthfully and explicitly**.
-
-Missing functionality is acceptable.
-Inference is not.
+* MUST satisfy all requirements of every claimed conformance class
+* MUST NOT claim conformance to unsupported classes
+* MUST NOT weaken or reinterpret protocol requirements
 
 ---
 
-## 4. Conformance Classes
+## 3. Relationship to Specifications
 
-LCAP defines the following conformance classes.
+This specification defines conformance requirements for:
 
-An implementation MAY claim any subset, provided all requirements for each claimed class are met.
+* LCAP Core
+* LCAP Fulfillment – Basic
+* LCAP Auth Handoff
+* LCAP Search
+* LCAP Snapshot
 
----
+This specification derives authority from those specifications.
 
-### 4.1 LCAP Core–Conformant Server
-
-An implementation claiming **LCAP Core conformance** MUST:
-
-* implement the full LCAP Core resource hierarchy
-* expose catalog, collection, item, edition, and holding resources
-* declare availability **only at the holding level**
-* represent unknown information explicitly
-* avoid inference of any kind
-* declare actions explicitly or not at all
-* declare server capabilities honestly
-* support deterministic traversal and revisioning
-
-A Core–conformant server:
-
-* MAY be discovery-only
-* MAY declare zero actions
-* MAY omit circulation and authentication
+It does not replace, reinterpret, or supersede their normative requirements.
 
 ---
 
-### 4.2 LCAP Fulfillment – Basic–Conformant Server
+## 4. Conformance Principles
 
-An implementation claiming **LCAP Fulfillment – Basic conformance** MUST:
+### 4.1 Profile-Scoped Conformance
+
+LCAP conformance is profile-scoped and additive.
+
+An implementation:
+
+* MUST claim at least one conformance class
+* MUST satisfy all requirements of each claimed class
+* MUST NOT claim conformance to a class it does not fully satisfy
+
+Conformance classes are orthogonal and non-exclusive.
+
+---
+
+### 4.2 Companion Profile Independence
+
+Companion profiles are independently claimable.
+
+Conformance to one companion profile MUST NOT imply conformance to another companion profile.
+
+Support for a companion profile MUST be declared explicitly.
+
+---
+
+### 4.3 Truthful Conformance Claims
+
+A conformance claim is itself protocol metadata.
+
+Conformance claims MUST be truthful.
+
+Implementations MUST NOT:
+
+* overstate support
+* imply support for undeclared features
+* claim partial support as full conformance
+* rely on ambiguous terminology
+
+Conformance claims MUST be auditable.
+
+---
+
+### 4.4 Validation Truth Discipline
+
+Validation results MUST reflect observed behavior.
+
+Validators MUST NOT infer compliance from absent information.
+
+Validation outcomes MUST distinguish between:
+
+* conformant
+* non-conformant
+* indeterminate
+
+Indeterminate validation results MUST NOT be interpreted as conformant or non-conformant.
+
+Validation MUST NOT weaken LCAP truth discipline.
+
+---
+
+### 4.5 Testability
+
+Conformance requirements MUST be testable.
+
+Requirements SHOULD be:
+
+* machine-checkable
+* repeatable
+* deterministic
+
+Requirements that cannot be fully machine-checked MUST remain auditable through scenario testing.
+
+---
+
+### 4.6 Conformance Authority Boundaries
+
+Conformance is authoritative only for protocol compliance.
+
+Conformance is not authoritative for:
+
+* implementation quality
+* performance
+* security
+* usability
+* accessibility
+* business suitability
+
+Conformance does not imply superiority, suitability, or preference.
+
+---
+
+## 5. Conformance Classes
+
+### 5.1 LCAP Core–Conformant Server
+
+A server claiming LCAP Core conformance MUST satisfy all requirements of LCAP Core.
+
+Required characteristics:
+
+* implements the full resource hierarchy:
+
+  * catalog
+  * collection
+  * item
+  * edition
+  * holding
+* declares availability only at the holding level
+* preserves truth discipline
+* avoids inference
+* separates resources and actions
+* declares capabilities explicitly
+* supports deterministic traversal
+
+A Core-conformant server:
+
+* MAY omit Fulfillment
+* MAY omit Auth Handoff
+* MAY omit Search
+* MAY omit Snapshot
+* MAY expose read-only catalogs
+
+---
+
+### 5.2 LCAP Fulfillment – Basic Conformant Server
+
+A server claiming Fulfillment conformance MUST:
 
 * be LCAP Core–conformant
-* implement all requirements of the Fulfillment – Basic specification
-* declare fulfillment actions only at the holding level
-* return explicit outcomes for every action execution
-* distinguish success, failure, denial, and pending states
-* avoid implied or guaranteed outcomes
+* implement LCAP Fulfillment – Basic in full
 
-Partial implementation of fulfillment actions is permitted, but **only declared actions are allowed**.
+Required characteristics:
+
+* declares the Fulfillment extension explicitly
+* declares actions only at the holding level
+* implements all declared actions fully
+* returns only defined outcome types:
+
+  * success
+  * failure
+  * denial
+  * pending
+  * indeterminate
+* represents failures explicitly
+* allows action failure even when actions are declared
+
+A Fulfillment-conformant server MUST NOT:
+
+* imply DRM behavior
+* imply delivery semantics
+* weaken fulfillment truth discipline
 
 ---
 
-### 4.3 LCAP Auth Handoff–Conformant Server
+### 5.3 LCAP Auth Handoff–Conformant Server
 
-An implementation claiming **LCAP Auth Handoff conformance** MUST:
+A server claiming Auth Handoff conformance MUST:
 
 * be LCAP Core–conformant
-* implement all requirements of the Auth Handoff specification
-* declare authentication requirements explicitly
-* provide valid handoff descriptors
-* return explicit post-handoff outcomes
+* implement LCAP Auth Handoff in full
 
-Implicit authentication behavior is forbidden.
+Required characteristics:
+
+* declares the Auth Handoff extension explicitly
+* declares authentication requirements explicitly
+* provides valid handoff descriptors
+* supports explicit authentication challenge signaling
+* avoids inference of authentication requirements
 
 ---
 
-### 4.4 Read-Only LCAP Core Catalog
+### 5.4 LCAP Search–Conformant Server
 
-A **Read-Only LCAP Core Catalog** is a valid conformance class.
+A server claiming Search conformance MUST:
 
-Such an implementation:
+* be LCAP Core–conformant
+* implement LCAP Search in full
 
-* MUST be LCAP Core–conformant
-* MUST declare no actions
-* MUST not imply access, circulation, or authentication
+Required characteristics:
 
-This class is suitable for:
+* declares the Search extension explicitly
+* exposes search discovery explicitly
+* represents search results as ordinary LCAP resources
+* preserves resource identity
+* preserves resource semantics
+* avoids inference
+
+---
+
+### 5.5 LCAP Snapshot–Conformant Server
+
+A server claiming Snapshot conformance MUST:
+
+* be LCAP Core–conformant
+* implement LCAP Snapshot in full
+
+Required characteristics:
+
+* declares the Snapshot extension explicitly
+* exposes snapshot discovery explicitly
+* provides stable snapshot identifiers
+* preserves catalog truth discipline
+* avoids inference
+
+---
+
+### 5.6 Read-Only LCAP Catalog
+
+A server MAY claim Read-Only LCAP conformance if:
+
+* it is LCAP Core–conformant
+* it declares no actions
+* it declares no Fulfillment capability
+
+Read-only status is a conformance class, not a limitation.
+
+Read-only implementations remain fully conformant Core implementations.
+
+This class exists to support:
 
 * national libraries
-* legal deposit systems
-* preservation mirrors
-* offline snapshots
+* preservation catalogs
+* archival mirrors
+* discovery-only deployments
 
 ---
 
-## 5. Partial Implementations
+## 6. Capability Claim Rules
 
-Partial implementations are explicitly allowed.
+All conformance claims MUST be supported by the capabilities resource.
 
-An implementation MAY:
+A conformant capabilities resource MUST:
 
-* omit entire feature areas
-* support only discovery
-* support only a subset of actions
+* declare supported features truthfully
+* list all supported extensions explicitly
+* omit unsupported capabilities
 
-However:
+A server MUST NOT:
 
-* unsupported features MUST be absent or explicitly marked as unknown
-* clients MUST NOT be expected to guess or infer support
-
-Claiming partial support for a feature while relying on inference is non-conformant.
-
----
-
-## 6. Prohibited Behavior (Non-Conformance)
-
-An implementation is **non-conformant** if it:
-
-* infers availability at item or edition level
-* treats missing information as false
-* infers action eligibility
-* infers authentication requirements
-* uses links to imply actions
-* assumes formats imply behavior or accessibility
-* performs silent fallback or best-effort behavior
-* claims conformance to unsupported specifications
-
-There are **no exceptions**.
+* imply support for undeclared features
+* rely on defaults or assumptions
+* overload capability meanings
 
 ---
 
-## 7. Validation Expectations
+## 7. Validation Surfaces
 
-LCAP conformance MUST be **testable**.
+### 7.1 Structural Validation
 
-Validation MAY include:
+Verifies:
 
-* structural validation (schemas, shapes)
-* semantic validation (state placement and meaning)
-* behavioral validation (explicit outcomes)
-* traversal validation (determinism and revision consistency)
+* syntactic correctness
+* required fields
+* forbidden fields
+* schema compliance
 
-LCAP does **not** require any specific validation tool or authority.
+This surface is machine-checkable.
+
+### 7.2 Semantic Validation
+
+Verifies:
+
+* resource hierarchy rules
+* availability placement
+* action placement
+* capability declarations
+* truth discipline requirements
+
+This surface is partially machine-checkable.
+
+### 7.3 Behavioral Validation
+
+Verifies:
+
+* action execution semantics
+* explicit outcomes
+* authentication signaling
+* search behavior consistency
+* snapshot behavior consistency
+
+This surface requires scenario testing.
+
+### 7.4 Claim Validation
+
+Verifies:
+
+* conformance claims
+* extension declarations
+* implementation behavior
+
+This surface is auditable.
 
 ---
 
-## 8. Conformance Claims
+## 8. Machine-Checkable Validation
 
-Conformance claims MUST be explicit and precise.
+Implementations SHOULD be validated using:
 
-Acceptable examples:
+* JSON Schemas
+* schema collections
+* deterministic test suites
 
-* “LCAP Core–Conformant Server”
-* “LCAP Core + Fulfillment – Basic–Conformant”
-* “Read-Only LCAP Core Catalog”
+Validation artifacts derive authority from the protocol specifications.
 
-Unacceptable examples:
+Validation artifacts SHOULD:
 
-* “LCAP-compatible”
-* “LCAP-inspired”
-* “Mostly LCAP”
-* “LCAP-like”
+* enforce required fields
+* enforce structural constraints
+* prohibit implicit state where applicable
 
-Ambiguous claims are forbidden.
+Validation artifacts MUST NOT:
 
----
-
-## 9. Relationship to Clients
-
-This specification governs **server conformance only**.
-
-Clients:
-
-* MAY implement heuristics for user experience
-* MUST NOT rely on inference for protocol correctness
-* MUST treat unknown information as unknown
-
-Client behavior does not affect server conformance claims.
+* encode policy logic
+* encode UI assumptions
+* encode publication semantics
 
 ---
 
-## 10. Stability and Enforcement
+## 9. Test Suite Expectations
 
-This conformance specification is frozen.
+A conformant implementation MUST be testable using:
+
+* deterministic requests
+* repeatable traversal
+* predictable signaling
+* auditable outcomes
+
+A valid test suite SHOULD include:
+
+* positive conformance cases
+* negative conformance cases
+* truth discipline checks
+* capability declaration checks
+* action outcome checks
+* authentication signaling checks
+* search validation checks
+* snapshot validation checks
+
+---
+
+## 10. Conformance Claims
+
+Implementations MUST express conformance claims using exact class names and explicit version numbers.
+
+Examples:
+
+* LCAP Core 1.0.0–Conformant Server
+* LCAP Fulfillment – Basic 1.0.1–Conformant Server
+* LCAP Search 1.0.0–Conformant Server
+
+Claims MUST include:
+
+* protocol version
+* conformance class
+* supported extensions
+
+Claims MUST correspond to actual deployed behavior.
+
+Conformance classes are version-specific.
+
+Conformance to one version MUST NOT imply conformance to another version.
+
+Claims MUST NOT be:
+
+* vague
+* approximate
+* implied
+
+---
+
+## 11. Non-Goals and Explicit Exclusions
+
+This specification MUST NOT define:
+
+* certification programs
+* trademarks
+* branding requirements
+* procurement rules
+* implementation licensing
+* runtime performance guarantees
+
+These exclusions are intentional and normative.
+
+---
+
+## 12. Stability and Evolution
+
+LCAP Conformance & Validation is frozen.
 
 Future revisions:
 
-* MUST preserve existing conformance classes
-* MUST NOT weaken conformance requirements
-* MAY introduce new conformance classes only through new specifications
+* MAY add new conformance classes
+* MUST preserve backward compatibility
+* MUST NOT weaken existing conformance classes
+* MUST NOT weaken protocol semantics
 
-LCAP relies on:
-
-* public documentation
-* explicit claims
-* verifiable behavior
-
-There is no central enforcement authority.
+Additional validation functionality MUST be introduced through separate specifications.
 
 ---
 
 ## End of LCAP Conformance & Validation Specification
-
----
